@@ -6,45 +6,68 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
+  const { theme, toggleTheme, isDark } = useTheme(); // 👈 ambil dari context
+
+  const handleHelp = () => {
+    navigation.navigate('Help');
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Apakah kamu yakin ingin keluar?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Keluar',
+        onPress: () => navigation.replace('Login'),
+      },
+    ]);
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Foto Profil dan Nama */}
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
       <Image
         source={{ uri: 'https://i.imgur.com/Yf6cFvG.png' }}
         style={styles.avatar}
       />
-      <Text style={styles.name}>Naufal Dhiaurrafif</Text>
-      <Text style={styles.email}>naufal@sleepnow.app</Text>
+      <Text style={[styles.name, { color: theme.text }]}>Naufal Dhiaurrafif</Text>
+      <Text style={[styles.email, { color: theme.secondaryText }]}>nadiemdemian@email.com</Text>
 
-      {/* Menu Pengaturan */}
       <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem}>
-          <Icon name="lock-reset" size={24} color="#fff" />
-          <Text style={styles.menuText}>Ubah Password</Text>
+        <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]}>
+          <Icon name="lock-reset" size={24} color={theme.text} />
+          <Text style={[styles.menuText, { color: theme.text }]}>Ubah Password</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Icon name="bell-ring" size={24} color="#fff" />
-          <Text style={styles.menuText}>Notifikasi</Text>
+        <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]}>
+          <Icon name="bell-ring" size={24} color={theme.text} />
+          <Text style={[styles.menuText, { color: theme.text }]}>Notifikasi</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Icon name="theme-light-dark" size={24} color="#fff" />
-          <Text style={styles.menuText}>Tema</Text>
+        <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]} onPress={toggleTheme}>
+          <Icon name="theme-light-dark" size={24} color={theme.text} />
+          <Text style={[styles.menuText, { color: theme.text }]}>
+            Tema ({isDark ? 'Gelap' : 'Terang'})
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Icon name="help-circle" size={24} color="#fff" />
-          <Text style={styles.menuText}>Bantuan</Text>
+        <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]} onPress={handleHelp}>
+          <Icon name="help-circle" size={24} color={theme.text} />
+          <Text style={[styles.menuText, { color: theme.text }]}>Bantuan</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.menuItem, styles.logout]}>
-          <Icon name="logout" size={24} color="#e94560" />
-          <Text style={[styles.menuText, { color: '#e94560' }]}>Keluar</Text>
+        <TouchableOpacity
+          style={[styles.menuItem, styles.logout, { borderColor: theme.accent }]}
+          onPress={handleLogout}
+        >
+          <Icon name="logout" size={24} color={theme.accent} />
+          <Text style={[styles.menuText, { color: theme.accent }]}>Keluar</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -53,7 +76,6 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0f3460',
     alignItems: 'center',
     paddingVertical: 40,
     flexGrow: 1,
@@ -67,11 +89,9 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
   },
   email: {
     fontSize: 14,
-    color: '#aaa',
     marginBottom: 30,
   },
   menuContainer: {
@@ -80,7 +100,6 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16213e',
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -89,10 +108,8 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     marginLeft: 15,
-    color: '#fff',
   },
   logout: {
-    borderColor: '#e94560',
     borderWidth: 1,
     backgroundColor: 'transparent',
   },

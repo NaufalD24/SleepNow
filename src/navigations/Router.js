@@ -3,12 +3,14 @@ import { createStackNavigator, TransitionPresets } from '@react-navigation/stack
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import HomeScreen from '../screens/Home';
-import StatisticsScreen from '../screens/Statistics';
-import ScheduleScreen from '../screens/Schedule';
-import SleepAidScreen from '../screens/SleepAid';
-import TipsScreen from '../screens/Tips';
-import ProfileScreen from '../screens/Profile';
+// Screens
+import HomeScreen from '../screens/home';
+import StatisticsScreen from '../screens/statistics';
+import ScheduleScreen from '../screens/schedule';
+import SleepAidScreen from '../screens/sleepAid';
+import TipsScreen from '../screens/tips';
+import ProfileScreen from '../screens/profile';
+import HelpScreen from '../screens/help'; // ✅ Tambahkan halaman bantuan
 // import AddSleepLog from '../screens/addSleepLog'; // opsional
 
 const Tab = createBottomTabNavigator();
@@ -65,16 +67,32 @@ function MainApp() {
 export default function Router() {
   return (
     <Stack.Navigator>
+      {/* Tab utama */}
       <Stack.Screen name="MainApp" component={MainApp} options={{ headerShown: false }} />
-      {/* Tambahkan layar tambahan berbasis stack jika diperlukan */}
-      {/* <Stack.Screen
+
+      {/* Halaman Bantuan */}
+      <Stack.Screen
+        name="Help"
+        component={HelpScreen}
+        options={{
+          headerShown: true,
+          title: 'Bantuan',
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+
+      {/* Tambahkan halaman AddSleepLog jika diperlukan */}
+      {/* 
+      <Stack.Screen
         name="AddSleepLog"
         component={AddSleepLog}
         options={{
-          headerShown: false,
+          headerShown: true,
+          title: 'Tambah Log Tidur',
           ...TransitionPresets.SlideFromRightIOS,
         }}
-      /> */}
+      /> 
+      */}
     </Stack.Navigator>
   );
 }
