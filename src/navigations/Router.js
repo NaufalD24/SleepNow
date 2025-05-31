@@ -10,7 +10,10 @@ import ScheduleScreen from '../screens/schedule';
 import SleepAidScreen from '../screens/sleepAid';
 import TipsScreen from '../screens/tips';
 import ProfileScreen from '../screens/profile';
-import HelpScreen from '../screens/help'; // ✅ Tambahkan halaman bantuan
+import HelpScreen from '../screens/help';
+import SleepLogScreen from '../screens/sleepLog';
+import AddLogScreen from '../screens/sleepLog/addLogScreen';
+import EditLogScreen from '../screens/sleepLog/editLogScreen'; // ✅ Tambahkan halaman bantuan
 // import AddSleepLog from '../screens/addSleepLog'; // opsional
 
 const Tab = createBottomTabNavigator();
@@ -69,6 +72,9 @@ export default function Router() {
     <Stack.Navigator>
       {/* Tab utama */}
       <Stack.Screen name="MainApp" component={MainApp} options={{ headerShown: false }} />
+      <Stack.Screen name="SleepLog" component={SleepLogScreen} />
+      <Stack.Screen name="AddLog" component={AddLogScreen} />
+      <Stack.Screen name="EditLog" component={EditLogScreen} />
 
       {/* Halaman Bantuan */}
       <Stack.Screen

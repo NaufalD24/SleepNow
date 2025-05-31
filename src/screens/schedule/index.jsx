@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
+
+const API_URL = 'https://6839aba46561b8d882b14221.mockapi.io/sleeplog'; // Sesuaikan dengan endpoint MockAPI kamu
 
 export default function ScheduleScreen() {
   const [sleepTime, setSleepTime] = useState(new Date(2025, 0, 1, 22, 0));
@@ -28,6 +37,18 @@ export default function ScheduleScreen() {
     const hours = Math.floor(duration / (1000 * 60 * 60));
     const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}h ${minutes}m`;
+  };
+
+  const handleSaveLog = async () => {
+    try {
+      const response = await axios.post(API_URL, {
+        title: `Sleep from ${formatTime(sleepTime)} to ${formatTime(wakeTime)}`,
+        duration: getSleepDuration(),
+      });
+      Alert.alert('Berhasil', 'Jadwal tidur berhasil disimpan ke Sleep Log!');
+    } catch (error) {
+      Alert.alert('Gagal', 'Terjadi kesalahan saat menyimpan log.');
+    }
   };
 
   return (
@@ -59,6 +80,11 @@ export default function ScheduleScreen() {
         <Icon name="chart-timeline-variant" size={24} color="#ffd700" />
         <Text style={styles.durationText}>Estimated Sleep: {getSleepDuration()}</Text>
       </View>
+
+      {/* Save Button */}
+      <TouchableOpacity style={styles.saveButton} onPress={handleSaveLog}>
+        <Text style={styles.saveText}>Simpan ke Sleep Log</Text>
+      </TouchableOpacity>
 
       {/* Picker */}
       {showPicker.type && (
@@ -118,5 +144,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginLeft: 10,
+  },
+  saveButton: {
+    backgroundColor: '#e94560',
+    marginTop: 30,
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+  },
+  saveText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
