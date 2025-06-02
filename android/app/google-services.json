@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1019932095068",
+    "project_id": "sleepowapp",
+    "storage_bucket": "sleepowapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019932095068:android:d95d0c7fc37dc5fb302c99",
+        "android_client_info": {
+          "package_name": "com.sleepnow1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD45DYfigrgBtoRKgg6Erob6WYe1axTOeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

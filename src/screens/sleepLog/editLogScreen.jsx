@@ -1,108 +1,160 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, Alert, StyleSheet } from 'react-native';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import axios from 'axios';
 
-const API_URL = 'https://6839aba46561b8d882b14221.mockapi.io/sleeplog';
+const EditLogScreen = ({ route, navigation }) => {
+  const { id } = route.params; // ID dokumen sleep log
 
-export default function EditLogScreen({ route, navigation }) {
-  const { id } = route.params;
   const [sleepTime, setSleepTime] = useState(new Date());
   const [wakeTime, setWakeTime] = useState(new Date());
-  const [showPicker, setShowPicker] = useState({ type: null });
+  const [loading, setLoading] = useState(true);
+  const [showSleepPicker, setShowSleepPicker] = useState(false);
+  const [showWakePicker, setShowWakePicker] = useState(false);
 
+  // Ambil data log dari Firestore
   useEffect(() => {
-    axios.get(`${API_URL}/${id}`).then(res => {
-      const data = res.data;
-      const [start, end] = data.title
-        .replace('Sleep from ', '')
-        .split(' to ')
-        .map(t => new Date(`2025-01-01T${t}:00`));
-      setSleepTime(start);
-      setWakeTime(end);
-    });
-  }, [id]);
+    const fetchData = async () => {
+      try {
+        const docRef = doc(db, 'sleeplogs', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Misal format title: "Sleep from 22:00 to 06:00"
+          const [start, end] = data.title
+            .replace('Sleep from ', '')
+            .split(' to ')
+            .map(t => new Date(`2025-01-01T${t}:00`));
+          setSleepTime(start);
+          setWakeTime(end);
+        } else {
+          Alert.alert('Error', 'Data log tidak ditemukan');
+          navigation.goBack();
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Gagal mengambil data');
+        navigation.goBack();
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id, navigation]);
 
-  const handleTimeChange = (event, selectedDate) => {
-    if (!selectedDate) return setShowPicker({ type: null });
-    if (showPicker.type === 'sleep') setSleepTime(selectedDate);
-    else if (showPicker.type === 'wake') setWakeTime(selectedDate);
-    setShowPicker({ type: null });
+  // Format waktu jadi string HH:mm
+  const formatTime = (date) => {
+    const h = date.getHours().toString().padStart(2, '0');
+    const m = date.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
   };
 
-  const formatTime = (date) =>
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+  // Hitung durasi tidur dalam jam (float)
   const getSleepDuration = () => {
-    const duration = (wakeTime - sleepTime + 86400000) % 86400000;
-    const hours = Math.floor(duration / (1000 * 60 * 60));
-    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
+    // Jika waktu bangun lebih kecil dari waktu tidur, anggap keesokan harinya
+    let start = sleepTime.getHours() * 60 + sleepTime.getMinutes();
+    let end = wakeTime.getHours() * 60 + wakeTime.getMinutes();
+    if (end <= start) {
+      end += 24 * 60; // tambah 24 jam
+    }
+    const durationMinutes = end - start;
+    return (durationMinutes / 60).toFixed(2); // durasi dalam jam dengan 2 desimal
   };
 
+  // Handle update ke Firestore
   const handleUpdateLog = async () => {
     try {
-      await axios.put(`${API_URL}/${id}`, {
+      const docRef = doc(db, 'sleeplogs', id);
+      await updateDoc(docRef, {
         title: `Sleep from ${formatTime(sleepTime)} to ${formatTime(wakeTime)}`,
-        duration: getSleepDuration(),
+        duration: Number(getSleepDuration()),
       });
       Alert.alert('Success', 'Log berhasil diperbarui');
       navigation.goBack();
     } catch (error) {
       Alert.alert('Error', 'Gagal memperbarui data');
+      console.log(error);
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Edit Sleep Log</Text>
-
-      <TouchableOpacity style={styles.timeCard} onPress={() => setShowPicker({ type: 'sleep' })}>
-        <Icon name="moon-waning-crescent" size={28} color="#fff" />
-        <Text style={styles.label}>Bed Time</Text>
-        <Text style={styles.time}>{formatTime(sleepTime)}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.timeCard} onPress={() => setShowPicker({ type: 'wake' })}>
-        <Icon name="white-balance-sunny" size={28} color="#fff" />
-        <Text style={styles.label}>Wake Up</Text>
-        <Text style={styles.time}>{formatTime(wakeTime)}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.saveButton} onPress={handleUpdateLog}>
-        <Text style={styles.saveText}>Perbarui Log</Text>
-      </TouchableOpacity>
-
-      {showPicker.type && (
+      <Text style={styles.label}>Sleep Time:</Text>
+      <Text style={styles.time} onPress={() => setShowSleepPicker(true)}>
+        {formatTime(sleepTime)}
+      </Text>
+      {showSleepPicker && (
         <DateTimePicker
-          value={showPicker.type === 'sleep' ? sleepTime : wakeTime}
+          value={sleepTime}
           mode="time"
-          is24Hour={false}
+          is24Hour={true}
           display="spinner"
-          onChange={handleTimeChange}
+          onChange={(event, selectedDate) => {
+            setShowSleepPicker(false);
+            if (selectedDate) setSleepTime(selectedDate);
+          }}
         />
       )}
+
+      <Text style={styles.label}>Wake Time:</Text>
+      <Text style={styles.time} onPress={() => setShowWakePicker(true)}>
+        {formatTime(wakeTime)}
+      </Text>
+      {showWakePicker && (
+        <DateTimePicker
+          value={wakeTime}
+          mode="time"
+          is24Hour={true}
+          display="spinner"
+          onChange={(event, selectedDate) => {
+            setShowWakePicker(false);
+            if (selectedDate) setWakeTime(selectedDate);
+          }}
+        />
+      )}
+
+      <View style={styles.buttonContainer}>
+        <Button title="Save" onPress={handleUpdateLog} />
+        <Button title="Cancel" onPress={() => navigation.goBack()} color="gray" />
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: '#0f3460', alignItems: 'center', paddingTop: 40,
+    padding: 20,
+    flex: 1,
+    justifyContent: 'center',
   },
-  title: { fontSize: 22, color: '#fff', marginBottom: 20 },
-  timeCard: {
-    backgroundColor: '#16213e', borderRadius: 15, padding: 20,
-    width: '85%', alignItems: 'center', marginVertical: 10, elevation: 5,
+  label: {
+    fontSize: 18,
+    marginTop: 20,
   },
-  label: { fontSize: 16, color: '#aaa', marginTop: 10 },
-  time: { fontSize: 22, color: '#fff', marginTop: 5, fontWeight: 'bold' },
-  saveButton: {
-    backgroundColor: '#ffd700', marginTop: 30,
-    paddingVertical: 15, paddingHorizontal: 25, borderRadius: 12,
+  time: {
+    fontSize: 24,
+    marginVertical: 10,
+    color: 'blue',
+    textAlign: 'center',
   },
-  saveText: {
-    color: '#0f3460', fontSize: 16, fontWeight: 'bold',
+  buttonContainer: {
+    marginTop: 40,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
+
+export default EditLogScreen;

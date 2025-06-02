@@ -1,19 +1,11 @@
-// src/screens/sleepLog/index.jsx
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
+  View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-
-const API_URL = 'https://6839aba46561b8d882b14221.mockapi.io/sleeplog';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig'; // pastikan path ini sesuai
 
 export default function SleepLogScreen() {
   const navigation = useNavigation();
@@ -22,8 +14,9 @@ export default function SleepLogScreen() {
 
   const getData = async () => {
     try {
-      const response = await axios.get(API_URL);
-      setLogs(response.data);
+      const snapshot = await getDocs(collection(db, 'sleeplogs'));
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setLogs(logs);
     } catch (error) {
       Alert.alert('Error', 'Gagal mengambil data');
     } finally {
@@ -33,7 +26,7 @@ export default function SleepLogScreen() {
 
   const deleteLog = async (id) => {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await deleteDoc(doc(db, 'sleeplogs', id));
       getData();
     } catch (error) {
       Alert.alert('Error', 'Gagal menghapus data');
@@ -44,10 +37,6 @@ export default function SleepLogScreen() {
     const unsubscribe = navigation.addListener('focus', getData);
     return unsubscribe;
   }, [navigation]);
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#e94560" style={{ flex: 1 }} />;
-  }
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
@@ -63,6 +52,10 @@ export default function SleepLogScreen() {
       </TouchableOpacity>
     </View>
   );
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#e94560" style={{ flex: 1 }} />;
+  }
 
   return (
     <View style={styles.container}>
